@@ -1,0 +1,24 @@
+{
+  "name": "smart-resource-cache",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kingmaker9841/smart-resource-cache.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kingmaker9841/smart-resource-cache/issues"
+  },
+  "homepage": "https://github.com/kingmaker9841/smart-resource-cache#readme",
+  "description": "",
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
