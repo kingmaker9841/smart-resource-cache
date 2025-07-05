@@ -13,7 +13,12 @@
     "test": "vitest --coverage",
     "test:gc": "node --expose-gc node_modules/vitest/vitest.mjs",
     "build": "tsc -p tsconfig.build.json",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepare": "husky",
+    "lint": "eslint . --ext .ts"
+  },
+  "lint-staged": {
+    "**/*.ts": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -49,6 +54,8 @@
   "homepage": "https://github.com/kingmaker9841/smart-resource-cache#readme",
   "devDependencies": {
     "@types/node": "^24.0.10",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }
