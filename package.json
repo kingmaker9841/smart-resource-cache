@@ -5,7 +5,7 @@
   "types": "dist/src/index.d.ts",
   "description": "A GC-aware cache using WeakRef and FinalizationRegistry",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest --coverage",
     "test:gc": "node --expose-gc node_modules/vitest/vitest.mjs",
     "build": "tsc",
     "clean": "rm -rf dist"
