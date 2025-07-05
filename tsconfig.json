@@ -3,17 +3,15 @@
     "target": "es2021",
     "module": "esnext",
     "rootDir": "./",
+    "outDir": "./dist",
     "moduleResolution": "node",
     "declaration": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "emitDeclarationOnly": false,
-    "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-
     "noUnusedLocals": true,
-
     "skipLibCheck": true
   }
 }

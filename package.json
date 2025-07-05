@@ -1,6 +1,6 @@
 {
   "name": "smart-cache-gc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "description": "A GC-aware cache using WeakRef and FinalizationRegistry",
@@ -14,6 +14,11 @@
     "type": "git",
     "url": "git+https://github.com/kingmaker9841/smart-resource-cache.git"
   },
+  "files": [
+    "dist/src",
+    "README.md",
+    "LICENSE"
+  ],
   "keywords": [
     "cache",
     "smart-cache",
