@@ -13,6 +13,7 @@ interface NotificationOptions<K, T extends FinalizationRegistryTarget> {
     cleanup?: (key: K, value: T) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SmartCache<T extends FinalizationRegistryTarget, K = any> {
     readonly #cache = new Map<K, CacheEntry<T & object>>();
     readonly #symbolCache = new Map<K, { value: T & symbol; registry: FinalizationRegistry<unknown> }>();

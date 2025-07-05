@@ -16,7 +16,7 @@ describe('SmartCache', () => {
 
     it('should return null if object is GCd (simulated)', () => {
         const cache = new SmartCache()
-        let value: any = { name: 'GC me' }
+        let value: object | null = { name: 'GC me' }
         const key = {}
 
         cache.set(key, value)
@@ -59,7 +59,7 @@ describe('SmartCache', () => {
 
         const cache = new SmartCache<object>()
 
-        let value: any = { name: 'GC Me' }
+        let value: object | null = { name: 'GC Me' }
         const key = { id: 'x' }
 
         const cleanup = vi.fn()
@@ -83,7 +83,7 @@ describe('SmartCache', () => {
         }
         const cache = new SmartCache()
         const key = 'this'
-        let value = { name: 'GC me' }
+        const value = { name: 'GC me' }
 
         cache.set(key, value)
 
@@ -99,8 +99,8 @@ describe('SmartCache', () => {
     it('should delete both object and symbol keys correctly', () => {
         const cache = new SmartCache()
         const key1 = { name: 'key1' }
-        let obj = { name: 'obj1' }
-        let sym = Symbol('symbol')
+        const obj = { name: 'obj1' }
+        const sym = Symbol('symbol')
         const key2 = { name: 'key2' }
 
         cache.set(key1, obj)
@@ -122,8 +122,8 @@ describe('SmartCache', () => {
     it('should reflect only alive values in size', () => {
         const cache = new SmartCache()
         const key1 = { name: 'key1' }
-        let obj = { name: 'obj1' }
-        let sym = Symbol('symbol')
+        const obj = { name: 'obj1' }
+        const sym = Symbol('symbol')
         const key2 = { name: 'key2' }
         const key3 = { name: 'key3' }
         const key4 = { name: 'key4' }
@@ -148,8 +148,8 @@ describe('SmartCache', () => {
     it('should return only alive keys from keys()', () => {
         const cache = new SmartCache()
         const key1 = { name: 'key1' }
-        let obj = { name: 'obj1' }
-        let sym = Symbol('symbol')
+        const obj = { name: 'obj1' }
+        const sym = Symbol('symbol')
         const key2 = { name: 'key2' }
         const key3 = { name: 'key3' }
         const key4 = { name: 'key4' }
@@ -204,7 +204,8 @@ describe('SmartCache', () => {
             return
         }
         const cache = new SmartCache<object>()
-        let a: any = { foo: 1 }, b: any = { bar: 2 }
+        let a: object | null = { foo: 1 };
+        const b: object | null = { bar: 2 }
         const keyA = {}, keyB = {}
 
         cache.set(keyA, a)
