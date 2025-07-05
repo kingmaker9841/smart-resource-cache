@@ -1,5 +1,9 @@
 # 🔒 SmartCache
 
+[![npm version](https://img.shields.io/npm/v/smart-cache-gc.svg)](https://www.npmjs.com/package/smart-cache-gc)
+[![bundlephobia](https://badgen.net/bundlephobia/minzip/smart-cache-gc)](https://bundlephobia.com/package/smart-cache-gc)
+[![Tests](https://github.com/kingmaker9841/smart-resource-cache/actions/workflows/test.yml/badge.svg)](https://github.com/kingmaker9841/smart-resource-cache/actions/workflows/test.yml)
+
 > A garbage-collection-aware, WeakRef-powered cache for long-running apps.
 
 `SmartCache` is a memory-efficient in-memory cache built with `WeakRef` and `FinalizationRegistry`. It automatically cleans up values when they are garbage collected, helping you avoid memory leaks in high-uptime applications like servers, data processors, or editor tools.
