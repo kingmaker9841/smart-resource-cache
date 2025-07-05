@@ -1,13 +1,18 @@
 {
   "name": "smart-cache-gc",
-  "version": "1.0.1",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "version": "1.0.2",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
   "description": "A GC-aware cache using WeakRef and FinalizationRegistry",
+  "engines": {
+    "node": ">=14.6"
+  },
   "scripts": {
     "test": "vitest --coverage",
     "test:gc": "node --expose-gc node_modules/vitest/vitest.mjs",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist"
   },
   "repository": {
@@ -29,6 +34,13 @@
     "WeakMap",
     "weakRef with finalization registry"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "author": "Milan Panta",
   "license": "MIT",
   "bugs": {

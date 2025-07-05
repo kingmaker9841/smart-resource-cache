@@ -2,16 +2,11 @@
   "compilerOptions": {
     "target": "es2021",
     "module": "esnext",
-    "rootDir": "./",
-    "outDir": "./dist",
     "moduleResolution": "node",
-    "declaration": true,
-    "declarationMap": false,
-    "emitDeclarationOnly": false,
+    "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noUnusedLocals": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["src", "tests", "vitest.config.ts"]
 }

@@ -80,6 +80,15 @@ node --expose-gc node_modules/vitest/vitest.mjs run
 | `size` (getter)       | Number of alive entries                      |
 | `getNotificationOnGC` | Register a GC cleanup callback for a value   |
 
+> ⚠️ This package requires support for `WeakRef` and `FinalizationRegistry`. These are available in:
+>
+> - Chrome 84+
+> - Firefox 79+
+> - Node.js 14.6+
+> - Safari: Not yet supported as of 2025
+
+> Please ensure your environment supports these features.
+
 ## 📜 License
 
 [MIT](./LICENSE)
