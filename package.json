@@ -1,23 +1,35 @@
 {
-  "name": "smart-resource-cache",
+  "name": "smart-cache-gc",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "description": "A GC-aware cache using WeakRef and FinalizationRegistry",
   "scripts": {
     "test": "vitest",
-    "test:gc": "node --expose-gc node_modules/vitest/vitest.mjs"
+    "test:gc": "node --expose-gc node_modules/vitest/vitest.mjs",
+    "build": "tsc",
+    "clean": "rm -rf dist"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kingmaker9841/smart-resource-cache.git"
   },
-  "keywords": [],
+  "keywords": [
+    "cache",
+    "smart-cache",
+    "low-level-cache",
+    "smart-resource-cache",
+    "finalizationRegistry",
+    "WeakRef",
+    "WeakMap",
+    "weakRef with finalization registry"
+  ],
   "author": "Milan Panta",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/kingmaker9841/smart-resource-cache/issues"
   },
   "homepage": "https://github.com/kingmaker9841/smart-resource-cache#readme",
-  "description": "",
   "devDependencies": {
     "@types/node": "^24.0.10",
     "typescript": "^5.8.3",

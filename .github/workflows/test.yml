@@ -1,0 +1,13 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install
+        run: npm Install
+      - name: Test
+        run: node --expose-gc node_modules/vitest/vitest.mjs run
