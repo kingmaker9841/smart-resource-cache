@@ -30,7 +30,8 @@
     "url": "git+https://github.com/kingmaker9841/smart-resource-cache.git"
   },
   "files": [
-    "dist/src",
+    "dist",
+    "!dist/examples",
     "README.md",
     "LICENSE"
   ],

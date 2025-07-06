@@ -1,0 +1,11 @@
+# Exclude examples from npm package
+dist/examples/
+examples/
+
+# Other common exclusions
+*.log
+.DS_Store
+node_modules/
+src/
+tsconfig.json
+.github/
