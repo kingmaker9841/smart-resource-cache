@@ -1,7 +1,7 @@
 {
   "name": "smart-cache-gc",
   "version": "1.1.1",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -14,7 +14,7 @@
     "test:ci": "vitest run",
     "test:coverage": "vitest --coverage",
     "test:gc": "node --expose-gc node_modules/vitest/vitest.mjs",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsup src/index.ts --format cjs,esm --dts --minify --dts-resolve",
     "clean": "rm -rf dist",
     "prepare": "husky",
     "lint": "eslint . --ext .ts",
@@ -49,7 +49,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     }
   },
   "author": "Milan Panta",
@@ -68,6 +68,7 @@
     "globals": "^16.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
+    "tsup": "^8.5.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.35.1",
     "vitest": "^3.2.4"
