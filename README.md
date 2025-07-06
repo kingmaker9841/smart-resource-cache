@@ -51,6 +51,14 @@ console.log(cache.get(key)) // null (after GC)
 
 ```
 
+## 📚 Examples
+
+For comprehensive examples and real-world use cases, check out the examples directory in this repository:
+
+[Basic Usage](./src//examples/browser/main.ts) - Getting started with SmartCache  
+[Advanced Configuration](./src/examples/node/index.ts) - Complex scenarios and best practices  
+[Performance Benchmarks](./src/examples/node/index.ts) - Testing memory efficiency
+
 ## 🔔 GC Cleanup Hook
 
 You can register a cleanup callback for when an object is garbage collected:
