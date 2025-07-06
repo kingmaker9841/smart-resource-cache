@@ -6,7 +6,7 @@ interface CacheEntry<T extends object> {
     registry: FinalizationRegistry<unknown>;
 }
 
-interface NotificationOptions<K, T extends FinalizationRegistryTarget> {
+interface NotificationOptions<K, T = FinalizationRegistryTarget> {
     key: K;
     value: T;
     unregisterToken?: T;
@@ -14,7 +14,7 @@ interface NotificationOptions<K, T extends FinalizationRegistryTarget> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class SmartCache<T extends FinalizationRegistryTarget, K = any> {
+export class SmartCache<K = any, T = FinalizationRegistryTarget> {
     readonly #cache = new Map<K, CacheEntry<T & object>>();
     readonly #symbolCache = new Map<K, { value: T & symbol; registry: FinalizationRegistry<unknown> }>();
 
@@ -72,7 +72,7 @@ export class SmartCache<T extends FinalizationRegistryTarget, K = any> {
             const weakRef = new WeakRef(value as T & object);
 
             this.#cache.set(key, { weakRef, registry });
-            registry.register(value, { key, value });
+            registry.register(value as object, { key, value });
         }
     }
 

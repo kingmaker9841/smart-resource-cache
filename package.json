@@ -1,6 +1,6 @@
 {
   "name": "smart-cache-gc",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,10 @@
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
     "prepare": "husky",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "demo:node": "npm run build && node --expose-gc dist/examples/node/index.js",
+    "demo:browser": "npm run build && npx serve dist/examples/browser",
+    "demo:all": "npm run demo:node && echo '\\n🌐 Now run: npm run demo:browser'"
   },
   "lint-staged": {
     "**/*.ts": "eslint --fix"
