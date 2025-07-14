@@ -1,8 +1,8 @@
 # 🔒 SmartCache
 
 [![npm version](https://img.shields.io/npm/v/smart-cache-gc.svg)](https://www.npmjs.com/package/smart-cache-gc)
-[![bundlephobia](https://badgen.net/bundlephobia/minzip/smart-cache-gc)](https://bundlephobia.com/package/smart-cache-gc)
-[![Tests](https://github.com/kingmaker9841/smart-resource-cache/actions/workflows/test.yml/badge.svg)](https://github.com/kingmaker9841/smart-resource-cache/actions/workflows/test.yml)
+[![bundlejs](https://deno.bundlejs.com/badge?q=smart-cache-gc)](https://bundlejs.com/?q=smart-cache-gc)
+[![CI](https://github.com/kingmaker9841/smart-resource-cache/actions/workflows/ci.yml/badge.svg)](https://github.com/kingmaker9841/smart-resource-cache/actions/workflows/ci.yml)
 
 > A garbage-collection-aware, WeakRef-powered cache for long-running apps.
 
