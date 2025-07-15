@@ -4,6 +4,17 @@ type FinalizationRegistryTarget = object | symbol;
 interface CacheEntry<T extends object> {
     weakRef: WeakRef<T>;
     registry: FinalizationRegistry<unknown>;
+    timeoutId?: NodeJS.Timeout;
+    expiresAt?: number;
+    unregisterToken: object
+}
+
+interface SymbolCacheEntry<T extends symbol> {
+    value: T;
+    registry: FinalizationRegistry<unknown>;
+    timeoutId?: NodeJS.Timeout;
+    expiresAt?: number;
+    unregisterToken: object
 }
 
 interface NotificationOptions<K, T = FinalizationRegistryTarget> {
@@ -13,10 +24,22 @@ interface NotificationOptions<K, T = FinalizationRegistryTarget> {
     cleanup?: (key: K, value: T) => void;
 }
 
+interface SetOptions {
+    ttl?: number;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SmartCache<K = any, T = FinalizationRegistryTarget> {
     readonly #cache = new Map<K, CacheEntry<T & object>>();
-    readonly #symbolCache = new Map<K, { value: T & symbol; registry: FinalizationRegistry<unknown> }>();
+    readonly #symbolCache = new Map<K, { value: T & symbol; registry: FinalizationRegistry<unknown>; timeoutId?: NodeJS.Timeout; expiresAt?: number; unregisterToken: object }>();
+    readonly #defaultTtl?: number;
+
+    constructor(options?: { defaultTtl?: number }) {
+        if (typeof FinalizationRegistry !== 'function') {
+            throw new Error('FinalizationRegistry is not supported in this environment')
+        }
+        this.#defaultTtl = options?.defaultTtl;
+    }
 
     /**
      * Gets a value from the cache by key
@@ -27,11 +50,17 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
         // Check object cache first
         if (this.#cache.has(key)) {
             const entry = this.#cache.get(key)!;
+
+            //first check if expired
+            if (this.#isExpired(entry.expiresAt)) {
+                this.#deleteEntry(key, entry)
+            }
+
             const derefValue = entry.weakRef.deref();
 
             if (derefValue === undefined) {
                 // Clean up dead entry
-                this.#cache.delete(key);
+                this.#deleteEntry(key, entry)
                 return null;
             }
 
@@ -41,6 +70,13 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
         // Check symbol cache
         if (this.#symbolCache.has(key)) {
             const entry = this.#symbolCache.get(key)!;
+
+            //check if expired for symbol
+            if (this.#isExpired(entry.expiresAt)) {
+                this.#deleteSymbolEntry(key, entry)
+                return null
+            }
+
             return entry.value as T;
         }
 
@@ -52,27 +88,45 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
      * @param key - The key to store under
      * @param value - The value to store (must be object or symbol)
      */
-    set(key: K, value: T): void {
+    set(key: K, value: T, options?: SetOptions): void {
         this.#validateInputs(key, value);
 
         // Clean up existing entries
         this.#cleanupExistingEntry(key);
 
+        const ttl = options?.ttl ?? this.#defaultTtl
+        const expiresAt = ttl ? Date.now() + ttl : undefined
+
+        const unregisterToken = Object(Symbol())
         if (typeof value === 'symbol') {
             // Handle symbols separately since WeakRef doesn't support them
-            const registry = this.#createFinalizationRegistry(key, value);
-            this.#symbolCache.set(key, {
+            const registry = this.#createFinalizationRegistry();
+            const timeoutId = ttl ? this.#createTtlTimeout(key, ttl) : undefined
+
+            const entry: SymbolCacheEntry<T & symbol> = {
                 value: value as T & symbol,
-                registry
-            });
-            registry.register(value as unknown as object, { key, value });
+                registry,
+                timeoutId,
+                expiresAt,
+                unregisterToken
+            }
+            this.#symbolCache.set(key, entry);
+            registry.register(value as unknown as object, { key, value }, unregisterToken);
         } else {
             // Handle objects with WeakRef
-            const registry = this.#createFinalizationRegistry(key, value);
+            const registry = this.#createFinalizationRegistry();
             const weakRef = new WeakRef(value as T & object);
+            const timeoutId = ttl ? this.#createTtlTimeout(key, ttl) : undefined
 
-            this.#cache.set(key, { weakRef, registry });
-            registry.register(value as object, { key, value });
+            const entry: CacheEntry<T & object> = {
+                weakRef,
+                registry,
+                timeoutId,
+                expiresAt,
+                unregisterToken
+            }
+            this.#cache.set(key, entry);
+            registry.register(value as object, { key, value }, unregisterToken);
         }
     }
 
@@ -84,7 +138,7 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
         const { key, value, unregisterToken, cleanup } = options;
         this.#validateInputs(key, value);
 
-        const registry = this.#createFinalizationRegistry(key, value, cleanup);
+        const registry = this.#createFinalizationRegistry(cleanup);
         registry.register(value as unknown as object, { key, value }, unregisterToken as object);
     }
 
@@ -97,12 +151,14 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
         let deleted = false;
 
         if (this.#cache.has(key)) {
-            this.#cache.delete(key);
+            const entry = this.#cache.get(key)!;
+            this.#deleteEntry(key, entry)
             deleted = true;
         }
 
         if (this.#symbolCache.has(key)) {
-            this.#symbolCache.delete(key);
+            const entry = this.#symbolCache.get(key)!;
+            this.#deleteSymbolEntry(key, entry);
             deleted = true;
         }
 
@@ -110,18 +166,25 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
     }
 
     /**
-     * Checks if a key exists in the cache and its value is still alive
+     * Checks if a key exists in the cache and its value is still alive and not expired
      * @param key - The key to check
-     * @returns true if key exists and value is still alive
+     * @returns true if key exists and value is still alive and non-expired
      */
     has(key: K): boolean {
         // Check object cache
         if (this.#cache.has(key)) {
             const entry = this.#cache.get(key)!;
+
+            //check if expired
+            if (this.#isExpired(entry.expiresAt)) {
+                this.#deleteEntry(key, entry)
+                return false;
+            }
+
             const isAlive = entry.weakRef.deref() !== undefined;
 
             if (!isAlive) {
-                this.#cache.delete(key);
+                this.#deleteEntry(key, entry)
                 return false;
             }
             return true;
@@ -129,33 +192,50 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
 
         // Check symbol cache (symbols are always "alive" until GC'd)
         if (this.#symbolCache.has(key)) {
-            return true;
+            const entry = this.#symbolCache.get(key)!;
+
+            if (this.#isExpired(entry.expiresAt)) {
+                this.#deleteSymbolEntry(key, entry);
+                return false;
+            }
+
+            return true
         }
 
         return false;
     }
 
     /**
-     * Gets the number of entries in the cache (only alive ones)
-     * @returns The number of alive entries
+     * Gets the number of entries in the cache (only alive and non-expired ones)
+     * @returns The number of alive and non-expired entries
      */
     get size(): number {
         // Clean up dead object entries and count alive ones
         let aliveCount = 0;
         const deadKeys: K[] = [];
 
+        // Check object cache
         for (const [key, entry] of this.#cache) {
-            if (entry.weakRef.deref() !== undefined) {
+            if (this.#isExpired(entry.expiresAt)) {
+                deadKeys.push(key);
+            } else if (entry.weakRef.deref() !== undefined) {
                 aliveCount++;
             } else {
                 deadKeys.push(key);
             }
         }
 
-        deadKeys.forEach(key => this.#cache.delete(key));
+        // Check symbol cache
+        for (const [key, entry] of this.#symbolCache) {
+            if (this.#isExpired(entry.expiresAt)) {
+                deadKeys.push(key);
+            } else {
+                aliveCount++;
+            }
+        }
 
-        // Add symbol cache size (symbols don't become "dead" until GC'd)
-        aliveCount += this.#symbolCache.size;
+        // Clean up dead/expired entries
+        deadKeys.forEach(key => this.delete(key));
 
         return aliveCount;
     }
@@ -164,6 +244,25 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
      * Clears all entries from the cache
      */
     clear(): void {
+        // Clear all timeouts before clearing caches
+        for (const entry of this.#cache.values()) {
+            if (entry.timeoutId) {
+                clearTimeout(entry.timeoutId);
+            }
+            if (entry.unregisterToken) {
+                this.#unregisterRegistry(entry.registry, entry.unregisterToken)
+            }
+        }
+
+        for (const entry of this.#symbolCache.values()) {
+            if (entry.timeoutId) {
+                clearTimeout(entry.timeoutId);
+            }
+            if (entry.unregisterToken) {
+                this.#unregisterRegistry(entry.registry, entry.unregisterToken)
+            }
+        }
+
         this.#cache.clear();
         this.#symbolCache.clear();
     }
@@ -178,18 +277,76 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
 
         // Check object cache
         for (const [key, entry] of this.#cache) {
-            if (entry.weakRef.deref() !== undefined) {
+            if (this.#isExpired(entry.expiresAt)) {
+                deadKeys.push(key);
+            } else if (entry.weakRef.deref() !== undefined) {
                 aliveKeys.push(key);
             } else {
                 deadKeys.push(key);
             }
         }
 
-        deadKeys.forEach(key => this.#cache.delete(key));
+        // Check symbol cache
+        for (const [key, entry] of this.#symbolCache) {
+            if (this.#isExpired(entry.expiresAt)) {
+                deadKeys.push(key);
+            } else {
+                aliveKeys.push(key);
+            }
+        }
 
-        aliveKeys.push(...this.#symbolCache.keys());
+        deadKeys.forEach(key => this.delete(key));
 
         return aliveKeys;
+    }
+
+    /**
+     * Gets TTL information for a key
+     * @param key - The key to check
+     * @returns TTL info or null if key doesn't exist
+     */
+    getTtl(key: K): { ttl: number; expiresAt: number } | null {
+        const entry = this.#cache.get(key) || this.#symbolCache.get(key);
+
+        if (!entry || !entry.expiresAt) {
+            return null;
+        }
+
+        const now = Date.now();
+        const ttl = Math.max(0, entry.expiresAt - now);
+
+        return {
+            ttl,
+            expiresAt: entry.expiresAt
+        };
+    }
+
+    /**
+     * Updates the TTL for an existing key
+     * @param key - The key to update
+     * @param ttl - New TTL in milliseconds
+     * @returns true if key existed and TTL was updated
+     */
+    updateTtl(key: K, ttl: number): boolean {
+        const objectEntry = this.#cache.get(key);
+        const symbolEntry = this.#symbolCache.get(key);
+
+        if (!objectEntry && !symbolEntry) {
+            return false;
+        }
+
+        const entry = objectEntry || symbolEntry!;
+
+        // Clear existing timeout
+        if (entry.timeoutId) {
+            clearTimeout(entry.timeoutId);
+        }
+
+        // Set new timeout and expiration
+        entry.timeoutId = this.#createTtlTimeout(key, ttl);
+        entry.expiresAt = Date.now() + ttl;
+
+        return true;
     }
 
     /**
@@ -216,20 +373,21 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
      * @private
      */
     #createFinalizationRegistry(
-        key: K,
-        value: T,
         userCleanup?: (key: K, value: T) => void
     ): FinalizationRegistry<{ key: K; value: T }> {
         return new FinalizationRegistry((heldValue: { key: K; value: T }) => {
-            console.log(`Object with key ${String(heldValue.key)} was GC'd`);
+            // console.log(`Object with key`, heldValue.key, `was GC'd`);
 
             // Clean up the appropriate cache
             if (typeof heldValue.value === 'symbol') {
-                this.#symbolCache.delete(heldValue.key);
+                const entry = this.#symbolCache.get(heldValue.key);
+                if (entry) {
+                    this.#deleteSymbolEntry(heldValue.key, entry);
+                }
             } else {
                 const entry = this.#cache.get(heldValue.key);
                 if (entry && entry.weakRef.deref() === undefined) {
-                    this.#cache.delete(heldValue.key);
+                    this.#deleteEntry(heldValue.key, entry);
                 }
             }
 
@@ -247,7 +405,78 @@ export class SmartCache<K = any, T = FinalizationRegistryTarget> {
      * @private
      */
     #cleanupExistingEntry(key: K): void {
-        this.#cache.delete(key);
-        this.#symbolCache.delete(key);
+        const objectEntry = this.#cache.get(key);
+        const symbolEntry = this.#symbolCache.get(key);
+
+        if (objectEntry) {
+            this.#deleteEntry(key, objectEntry);
+        }
+
+        if (symbolEntry) {
+            this.#deleteSymbolEntry(key, symbolEntry);
+        }
     }
+
+
+    #createTtlTimeout(key: K, ttl: number): NodeJS.Timeout {
+        return setTimeout(() => {
+            const entry = this.#cache.get(key) || this.#symbolCache.get(key);
+            if (entry) {
+                this.#unregisterRegistry(entry.registry, entry.unregisterToken);
+                if ('weakRef' in entry) {
+                    this.#deleteEntry(key, entry)
+                } else {
+                    this.#deleteSymbolEntry(key, entry)
+                }
+            }
+        }, ttl)
+    }
+
+    /**
+     * Checks if an entry is expired
+     * @private
+     */
+    #isExpired(expiresAt?: number): boolean {
+        return expiresAt !== undefined && Date.now() > expiresAt
+    }
+
+    /** 
+    * Deletes an object cache entry with proper cleanup 
+    * @private
+    */
+    #deleteEntry(key: K, entry: CacheEntry<T & object>): void {
+        if (entry.timeoutId) {
+            clearTimeout(entry.timeoutId)
+        }
+        if (entry.unregisterToken) {
+            this.#unregisterRegistry(entry.registry, entry.unregisterToken)
+        }
+        this.#cache.delete(key)
+    }
+
+    /**
+     * Deletes an symbol cache entry with proper cleanup 
+     * @private
+     */
+    #deleteSymbolEntry(key: K, entry: SymbolCacheEntry<T & symbol>): void {
+        if (entry.timeoutId) {
+            clearTimeout(entry.timeoutId)
+        }
+        if (entry.unregisterToken) {
+            this.#unregisterRegistry(entry.registry, entry.unregisterToken)
+        }
+        this.#symbolCache.delete(key)
+    }
+
+    #unregisterRegistry(
+        registry: FinalizationRegistry<{ key: K; value: T }>,
+        token: object
+    ): void {
+        try {
+            registry.unregister(token);
+        } catch (error) {
+            console.error('Failed to unregister FinalizationRegistry token:', error);
+        }
+    }
+
 }

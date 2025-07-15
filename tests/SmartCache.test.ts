@@ -1,10 +1,21 @@
+import { afterEach, beforeEach } from "vitest";
 import { describe, expect, it, vi } from "vitest";
 
 import { SmartCache } from "../src/SmartCache";
 
 describe('SmartCache', () => {
+    let cache = new SmartCache()
+
+    beforeEach(() => {
+        cache = new SmartCache()
+    })
+
+    afterEach(() => {
+        cache.clear()
+    })
+
     it('should store and retrieve a value', () => {
-        const cache = new SmartCache()
+        expect(cache.size).toEqual(0)
         const key = { id: 1 }
         const value = { name: 'John' }
 
@@ -15,7 +26,6 @@ describe('SmartCache', () => {
     })
 
     it('should return null if object is GCd (simulated)', () => {
-        const cache = new SmartCache()
         let value: object | null = { name: 'GC me' }
         const key = {}
 
@@ -30,7 +40,6 @@ describe('SmartCache', () => {
     })
 
     it('should return null if no value is set for a key', () => {
-        const cache = new SmartCache()
         const key = {}
         const retrieved = cache.get(key)
 
@@ -38,7 +47,6 @@ describe('SmartCache', () => {
     })
 
     it('should overwrite existing value for the same key', () => {
-        const cache = new SmartCache()
         const key = { name: 'John' }
 
         const value1 = { value1: 'value1' }
@@ -47,7 +55,6 @@ describe('SmartCache', () => {
         cache.set(key, value2)
 
         const retrieved = cache.get(key)
-        console.log(retrieved)
         expect(retrieved).toEqual(value2)
     })
 
@@ -56,8 +63,6 @@ describe('SmartCache', () => {
             console.warn('Run test with --expose-gc to test GC behavior')
             return
         }
-
-        const cache = new SmartCache<object>()
 
         let value: object | null = { name: 'GC Me' }
         const key = { id: 'x' }
@@ -81,7 +86,7 @@ describe('SmartCache', () => {
             console.warn('Run test with --expose-gc to test GC behavior')
             return
         }
-        const cache = new SmartCache()
+
         const key = 'this'
         const value = { name: 'GC me' }
 
@@ -97,7 +102,6 @@ describe('SmartCache', () => {
     })
 
     it('should delete both object and symbol keys correctly', () => {
-        const cache = new SmartCache()
         const key1 = { name: 'key1' }
         const obj = { name: 'obj1' }
         const sym = Symbol('symbol')
@@ -117,17 +121,17 @@ describe('SmartCache', () => {
 
         expect(cache.get(key1)).toEqual(null)
         expect(cache.get(key2)).toEqual(null)
+        expect(cache.size).toEqual(0)
     })
 
     it('should reflect only alive values in size', () => {
-        const cache = new SmartCache()
         const key1 = { name: 'key1' }
-        const obj = { name: 'obj1' }
-        const sym = Symbol('symbol')
         const key2 = { name: 'key2' }
         const key3 = { name: 'key3' }
         const key4 = { name: 'key4' }
         const key5 = { name: 'key5' }
+        const obj = { name: 'obj1' }
+        const sym = Symbol('symbol')
 
 
         cache.set(key1, obj)
@@ -146,7 +150,6 @@ describe('SmartCache', () => {
     })
 
     it('should return only alive keys from keys()', () => {
-        const cache = new SmartCache()
         const key1 = { name: 'key1' }
         const obj = { name: 'obj1' }
         const sym = Symbol('symbol')
@@ -176,7 +179,6 @@ describe('SmartCache', () => {
         cache.delete(key2)
 
         retrieved = cache.keys()
-        console.log(retrieved)
         expect(retrieved).toEqual([
             { name: 'key3' },
             { name: 'key5' },
@@ -185,7 +187,6 @@ describe('SmartCache', () => {
     })
 
     it('should cache and retrieve symbol values correctly', () => {
-        const cache = new SmartCache()
         const key1 = 'Key1'
         const value1 = Symbol('Value1')
 
@@ -203,7 +204,7 @@ describe('SmartCache', () => {
             console.warn('Run test with --expose-gc to test GC behavior')
             return
         }
-        const cache = new SmartCache<object>()
+
         let a: object | null = { foo: 1 };
         const b: object | null = { bar: 2 }
         const keyA = {}, keyB = {}
