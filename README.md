@@ -16,6 +16,8 @@
 - 🔑 Supports both **object and symbol** values
 - 🧼 Automatic cleanup of dead entries
 - 🔍 Utility methods: `.get()`, `.has()`, `.delete()`, `.clear()`, `.keys()`, `.size`
+- ⏳ Optional TTL (Time-To-Live) expiration
+- 📉 `maxSize` support with LRU eviction strategy
 - 🧪 Fully unit tested (with GC-safe behavior)
 
 ---
@@ -26,12 +28,18 @@
 npm install smart-cache-gc
 ```
 
+> `SmartCache` works out of the box with optional `ttl` and `maxSize` for expiration and LRU eviction.
+
 ## 🛠️ Usage
 
 ```
 import { SmartCache } from 'smart-cache-gc'
 
-const cache = new SmartCache<object>()
+// Optional TTL and maxSize support
+const cacheWithOptions = new SmartCache<object>({
+  defaultTtl: 1000 * 60, // 1 minute TTL by default
+  maxSize: 100           // LRU eviction after 100 items
+})
 
 let obj = { id: 1 }
 const key = { customKey: true }
@@ -91,6 +99,29 @@ node --expose-gc node_modules/vitest/vitest.mjs run
 | `keys()`              | Returns all alive keys                       |
 | `size` (getter)       | Number of alive entries                      |
 | `getNotificationOnGC` | Register a GC cleanup callback for a value   |
+
+## ⚙️ Constructor Options
+
+| Option       | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `defaultTtl` | Default time-to-live for entries (in ms)       |
+| `maxSize`    | Maximum number of live entries before eviction |
+
+## 🕒 ttl per-entry (override)
+
+You can override the default TTL on a per-entry basis using the optional ttl in .set():
+
+```
+cache.set(key, value, { ttl: 5000 }) // expires in 5 seconds
+```
+
+This overrides the defaultTtl set in the constructor (if any) for this specific entry only.
+
+## ♻️ LRU Eviction
+
+When `maxSize` is defined, `SmartCache` uses an optimized LRU eviction policy to remove the least recently accessed entries. This keeps memory usage predictable in high-load scenarios.
+
+## Support
 
 > ⚠️ This package requires support for `WeakRef` and `FinalizationRegistry`. These are available in:
 >
