@@ -38,7 +38,7 @@ describe('SmartCache - Symbol Support', () => {
         cache.set(key, value);
 
         vi.advanceTimersByTime(1000);
-        expect(cache.get(key)).toBeNull();
+        expect(cache.get(key)).toBeUndefined();
     });
 
     it('should support delete() with symbol keys', () => {
@@ -47,7 +47,7 @@ describe('SmartCache - Symbol Support', () => {
         const value = Symbol('deleteVal');
         cache.set(key, value);
         expect(cache.delete(key)).toBe(true);
-        expect(cache.get(key)).toBeNull();
+        expect(cache.get(key)).toBeUndefined();
     });
 
     it('should support clear() with symbol keys', () => {
@@ -56,6 +56,6 @@ describe('SmartCache - Symbol Support', () => {
         const value = Symbol('clearVal');
         cache.set(key, value);
         cache.clear();
-        expect(cache.get(key)).toBeNull();
+        expect(cache.get(key)).toBeUndefined();
     });
 });

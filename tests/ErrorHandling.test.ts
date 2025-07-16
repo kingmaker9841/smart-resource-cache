@@ -15,7 +15,6 @@ describe('SmartCache - Error Handling', () => {
     it('should throw error on invalid key/value types', () => {
         const cache = new SmartCache();
         expect(() => cache.set(null, {})).toThrow();
-        // @ts-expect-error - invalid value
         expect(() => cache.set({}, undefined)).toThrow();
     });
 
@@ -27,13 +26,13 @@ describe('SmartCache - Error Handling', () => {
         cache.set(key, value1, { ttl: 1000 });
         cache.set(key, value2, { ttl: 2000 });
         vi.advanceTimersByTime(2000);
-        expect(cache.get(key)).toBeNull();
+        expect(cache.get(key)).toBeUndefined();
     });
 
     it('get() on non-existent key returns undefined', () => {
         const cache = new SmartCache();
-        expect(cache.get({})).toBeNull();
-        expect(cache.get(Symbol('nope'))).toBeNull();
+        expect(cache.get({})).toBeUndefined();
+        expect(cache.get(Symbol('nope'))).toBeUndefined();
     });
 
     it('calling clear() mid-execution doesn’t break registry or timers', () => {
@@ -43,6 +42,6 @@ describe('SmartCache - Error Handling', () => {
         cache.set(key, value, { ttl: 5000 });
         cache.clear();
         vi.advanceTimersByTime(5000);
-        expect(cache.get(key)).toBeNull();
+        expect(cache.get(key)).toBeUndefined();
     });
 });

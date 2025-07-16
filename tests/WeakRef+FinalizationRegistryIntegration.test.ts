@@ -41,8 +41,12 @@ describe('WeakRef + FinalizationRegistry', () => {
         const key = { id: 'x' }
 
         const cleanup = vi.fn()
+        const unregisterToken = Object(Symbol('token'))
 
-        cache.getNotificationOnGC({ key, value, cleanup })
+        cache.getNotificationOnGC({
+            key, value, cleanup,
+            unregisterToken
+        })
 
         value = null
 
