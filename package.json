@@ -35,7 +35,8 @@
     "dist",
     "!dist/examples",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "!dist/bench"
   ],
   "keywords": [
     "cache",
